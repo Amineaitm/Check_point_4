@@ -1,0 +1,134 @@
+#Write a paragraph selecting the most important features (feature selection):
+#I have chosen "price" and "sqft_living" for linear regression because they exhibit a strong correlation. Similarly, for multi-linear regression, 
+#I have selected "sqft_above" and "sqft_living" as they also exhibit a strong correlation. I arrived at this decision by using the "plot_correlation_map"
+#function, which allowed me to visualize the correlation between different features. Feature selection is a crucial step in machine learning as it helps to identify
+#the most important features that can impact the accuracy and performance of the model. In this case, selecting the features with a strong correlation helps to improve
+#the accuracy of the model and ensure that it is based on meaningful and relevant information.
+
+
+#Importing libraries
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn import metrics
+from sklearn.preprocessing import PolynomialFeatures
+
+pd.set_option('display.max_columns', None)
+#pd.set_option('display.max_rows', None)
+data = pd.read_csv("kc_house_data.csv")
+#print(data)
+
+print(data.isnull())
+print(data.isnull().sum())
+
+#Fonction pour lire les correlation qu'on a dans notre data 
+def plot_correlation_map(df):
+    corr = df.corr()
+    plt.figure(figsize=(12, 10))
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    sns.heatmap(
+        corr,
+        cmap=cmap,
+        square=True,
+        cbar_kws={'shrink': .9},
+        annot=True,
+        annot_kws={'fontsize': 7}
+    )
+    plt.show()
+
+
+#Fonction pour predire le prix avec sqft living et sqft above
+def predict_price_sqft_above_and_living(data):
+
+    # selection de la colonne "sqft_above" et "sqft_living" pour la prédiction de prix
+    X = data[["sqft_above", "sqft_living"]]
+    y = data["price"]
+
+    # division en ensembles d'entraînement et de test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # création du modèle de régression polynomiale
+    poly = PolynomialFeatures(degree=2)
+    X_poly_train = poly.fit_transform(X_train)
+    X_poly_test = poly.transform(X_test)
+    model = LinearRegression()
+
+    # entraînement du modèle sur l'ensemble d'entraînement
+    model.fit(X_poly_train, y_train)
+
+    # prédictions sur l'ensemble de test
+    y_pred = model.predict(X_poly_test)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = metrics.r2_score(y_test, y_pred)
+    print("MSE and R2 predict_price_sqft_above_and_living_polynomial:\n")
+    print("MSE:", mse)
+    print("R2:", r2)
+    # Affichage des résultats
+    fig, ax = plt.subplots()
+    ax.scatter(X_test["sqft_above"], y_test, color='blue')
+    ax.scatter(X_test["sqft_living"], y_test, color='green')
+    ax.plot(X_test, y_pred, color='red', linewidth=2)
+    ax.set_xlabel('Sqft')
+    ax.set_ylabel('Price')
+    plt.show()
+
+#Fonction pour predire le prix avec sqft living
+def predict_price_sqft_living(data):
+    # selection de la colonne "sqft_living" pour la prédiction de prix
+    X = data[["sqft_living"]]
+    y = data["price"]
+
+    # division en ensembles d'entraînement et de test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # régression linéaire
+    model_linear = LinearRegression()
+    model_linear.fit(X_train, y_train)
+    y_pred_linear = model_linear.predict(X_test)
+
+    # régression polynomiale de degré 2
+    poly = PolynomialFeatures(degree=2)
+    X_poly_train = poly.fit_transform(X_train)
+    X_poly_test = poly.transform(X_test)
+    model_poly = LinearRegression()
+    model_poly.fit(X_poly_train, y_train)
+    y_pred_poly = model_poly.predict(X_poly_test)
+
+    # évaluation des performances
+    mse_linear = mean_squared_error(y_test, y_pred_linear)
+    r2_linear = metrics.r2_score(y_test, y_pred_linear)
+    mse_poly = mean_squared_error(y_test, y_pred_poly)
+    r2_poly = metrics.r2_score(y_test, y_pred_poly)
+
+    print("\nMSE and R2 for linear regression:")
+    print("MSE:", mse_linear)
+    print("R2:", r2_linear)
+
+    print("\nMSE and R2 for polynomial regression of degree 2:")
+    print("MSE:", mse_poly)
+    print("R2:", r2_poly)
+    # Affichage des résultats
+    plt.scatter(X_test, y_test, color='blue')
+    plt.plot(X_test, y_pred_poly, color='red', linewidth=2)
+    plt.xlabel('Sqft living')
+    plt.ylabel('Price')
+    plt.show()
+
+
+print(plot_correlation_map(data))
+predict_price_sqft_above_and_living(data)
+predict_price_sqft_living(data)
+
+
+#J'ai utilisé les colonnes "sqft_above" et "sqft_living" pour prédire les prix, et que  j'ai divisé les données en ensembles d'entraînement et de test en utilisant train_test_split avec une taille de test de 20%. Ensuite,j'ai créé un modèle de régression linéaire, entraîné le modèle sur l'ensemble d'entraînement et effectué des prédictions sur l'ensemble de test. Enfin, j'ai calculé l'erreur quadratique moyenne et le coefficient de détermination (R²) pour évaluer les performances du modèle.
+
+
+
+
+
+
